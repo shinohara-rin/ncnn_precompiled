@@ -75,7 +75,7 @@ jobs:
           cmake --build . --target install
       - name: Create tarball x86_64
         run: |
-          tar czf -C ncnn/build/install ncnn_${GITHUB_REF##*/v}_x86_64-apple-darwin.tar.gz .
+          tar czf ncnn_${GITHUB_REF##*/v}_x86_64-apple-darwin.tar.gz -C ncnn/build/install .
       - name: Compile arm64
         run: |
           export VULKAN_ROOT=`pwd`/vulkansdk-macos-1.2.189.0
@@ -92,7 +92,7 @@ jobs:
           cmake --build . --target install
       - name: Create tarball arm64
         run: |
-          tar czf -C ncnn/build/install ncnn_${GITHUB_REF##*/v}_arm64-apple-darwin.tar.gz .
+          tar czf ncnn_${GITHUB_REF##*/v}_arm64-apple-darwin.tar.gz -C ncnn/build/install .
       - uses: softprops/action-gh-release@v1
         with:
           files: "*.tar.gz"
