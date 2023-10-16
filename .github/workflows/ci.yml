@@ -16,7 +16,7 @@ jobs:
           git submodule update --init
       - name: Get system deps
         run: |
-          sudo apt install build-essential git cmake libprotobuf-dev protobuf-compiler libvulkan-dev vulkan-utils libopencv-dev
+          sudo apt install build-essential git cmake libprotobuf-dev protobuf-compiler libvulkan-dev vulkan-tools libopencv-dev
 
       - name: Get vulkan sdk
         run: |
