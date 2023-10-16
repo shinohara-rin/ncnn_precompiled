@@ -34,7 +34,7 @@ jobs:
       - name: Create tarball
         run: |
           cd ncnn/build/install
-          tar czf ncnn_${GITHUB_REF##*/v}_x86_64-linux-gnu.tar.gz .
+          tar czf ../ncnn_${GITHUB_REF##*/v}_x86_64-linux-gnu.tar.gz .
       - uses: softprops/action-gh-release@v1
         with:
-          files: ncnn/build/install/*.tar.gz
+          files: ncnn/build/*.tar.gz
