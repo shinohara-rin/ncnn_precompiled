@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  precompile:
+  precompile-linux:
     runs-on: ubuntu-latest
     steps:
       - name: Clone NCNN
@@ -25,19 +25,58 @@ jobs:
         run: |
           wget https://sdk.lunarg.com/sdk/download/1.2.189.0/linux/vulkansdk-linux-x86_64-1.2.189.0.tar.gz?Human=true -O vulkansdk-linux-x86_64-1.2.189.0.tar.gz
           tar -xf vulkansdk-linux-x86_64-1.2.189.0.tar.gz
-          export VULKAN_SDK=$(pwd)/1.2.189.0/x86_64
       - name: Compile
         run: |
+          export VULKAN_SDK=$(pwd)/1.2.189.0/x86_64
           cd ncnn
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release -DNCNN_VULKAN=ON -DNCNN_BUILD_EXAMPLES=ON ..
+          cmake -DCMAKE_BUILD_TYPE=Release -DNCNN_VULKAN=ON -DNCNN_BUILD_EXAMPLES=OFF ..
           make -j$(nproc)
           make install
       - name: Create tarball
         run: |
           cd ncnn/build/install
           tar czf ../ncnn_${GITHUB_REF##*/v}_x86_64-linux-gnu.tar.gz .
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: ncnn/build/*.tar.gz
+  precompile-darwin:
+    runs-on: macos-latest
+    steps:
+      - name: Clone NCNN
+        run: |
+          git clone --branch=${GITHUB_REF##*/v} https://github.com/Tencent/ncnn.git
+          cd ncnn
+          git submodule update --init
+      - name: Get system deps
+        run: |
+          brew install protobuf libomp
+
+      - name: Get vulkan sdk
+        run: |
+          wget https://sdk.lunarg.com/sdk/download/1.2.189.0/mac/vulkansdk-macos-1.2.189.0.dmg?Human=true -O vulkansdk-macos-1.2.189.0.dmg
+          hdiutil attach vulkansdk-macos-1.2.189.0.dmg
+          sudo /Volumes/vulkansdk-macos-1.2.189.0/InstallVulkan.app/Contents/MacOS/InstallVulkan --root `pwd`/vulkansdk-macos-1.2.189.0 --accept-licenses --default-answer --confirm-command install
+          hdiutil detach /Volumes/vulkansdk-macos-1.2.189.0
+      - name: Compile
+        run: |
+          export VULKAN_ROOT=`pwd`/vulkansdk-macos-1.2.189.0
+          export VULKAN_SDK=${VULKAN_ROOT}/macOS
+          cd ncnn
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
+              -DVulkan_INCLUDE_DIR=${VULKAN_ROOT}/MoltenVK/include \
+              -DVulkan_LIBRARY=${VULKAN_ROOT}/MoltenVK/dylib/macOS/libMoltenVK.dylib \
+              -DNCNN_VULKAN=ON -DNCNN_BUILD_EXAMPLES=OFF ..
+
+          cmake --build . -j `sysctl -n hw.ncpu`
+          cmake --build . --target install
+      - name: Create tarball
+        run: |
+          cd ncnn/build/install
+          tar czf ../ncnn_${GITHUB_REF##*/v}_x86_64-apple-darwin.tar.gz .
       - uses: softprops/action-gh-release@v1
         with:
           files: ncnn/build/*.tar.gz
